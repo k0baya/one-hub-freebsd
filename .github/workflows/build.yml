@@ -8,35 +8,24 @@ jobs:
     name: Build
     steps:
     - uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v4
+    - name: Build
+      uses: vmactions/freebsd-vm@v1
       with:
-        go-version: 'stable'
-        check-latest: true
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 16
-
-    - name: Clone Repo
-      run: |
-        export LATEST_APP=$(wget -qO- https://api.github.com/repos/MartialBE/one-api/tags | gawk -F '["v]' '/name/{print "v"$5;exit}')
-        git clone -b $LATEST_APP https://github.com/MartialBE/one-api
-
-    - name: Build Frontend
-      run: |
-        cd one-api/web
-        npm install
-        REACT_APP_VERSION=$(git describe --tags) npm run build
-        cd ../..
-
-    - name: Build binary
-      run: |
-        cd one-api
-        GOOS=freebsd GOARCH=amd64 CGO_ENABLED=1 go build -ldflags "-s -w -X 'one-api/common.Version=$(git describe --tags)' -extldflags '-static'" -o one-api  && tar -czvf ../one-api-freebsd-amd64.tar.gz ./one-api
-        cd ..
+        usesh: true
+        release: 13.2
+        prepare: |
+          pkg install -y node16 npm-node16 wget curl git gcc bash gawk gsed
+          wget https://dl.google.com/go/go1.22.0.freebsd-amd64.tar.gz && tar -C /usr/local -xzf go1.22.0.freebsd-amd64.tar.gz && rm go1.22.0.freebsd-amd64.tar.gz
+          ln -s /usr/local/go/bin/go /usr/local/bin/go
+          
+        run: |
+          export LATEST_APP=$(wget -qO- https://api.github.com/repos/MartialBE/one-api/tags | gawk -F '["v]' '/name/{print "v"$5;exit}')
+          git clone -b $LATEST_APP https://github.com/MartialBE/one-api
+          cd one-api/web
+          npm install
+          REACT_APP_VERSION=$(git describe --tags) npm run build
+          cd ..
+          go build -ldflags "-s -w -X 'one-api/common.Version=$(git describe --tags)' -extldflags '-static'" -o one-api  && tar -czvf ../one-api-freebsd-amd64.tar.gz ./one-api
         
     - name: Upload artifact
       uses: actions/upload-artifact@main
