@@ -1,0 +1,67 @@
+name: Build
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 'stable'
+        check-latest: true
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+
+    - name: Clone Repo
+      run: |
+        export LATEST_APP=$(wget -qO- https://api.github.com/repos/MartialBE/one-api/tags | gawk -F '["v]' '/name/{print "v"$5;exit}')
+        git clone -b $LATEST_APP https://github.com/MartialBE/one-api
+
+    - name: Build Frontend
+      run: |
+        cd one-api/web
+        npm install
+        REACT_APP_VERSION=$(git describe --tags) npm run build
+        cd ../..
+
+    - name: Build binary
+      run: |
+        cd one-api
+        GOOS=freebsd GOARCH=amd64 go build -ldflags "-s -w -X 'one-api/common.Version=$(git describe --tags)' -extldflags '-static'" -o one-api  && tar -czvf ../one-api-freebsd-amd64.tar.gz ./one-api && rm -f one-api \
+        cd ..
+        
+    - name: Upload artifact
+      uses: actions/upload-artifact@main
+      with:
+        name: memos-pre-built
+        path: |
+            one-api-freebsd-amd64.tar.gz
+            
+    - name: Generate release tag
+      id: tag
+      run: echo "release_tag=$(wget -qO- https://api.github.com/repos/MartialBE/one-api/tags | gawk -F '["v]' '/name/{print "v"$5;exit}')" >> $GITHUB_OUTPUT
+
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.tag.outputs.release_tag }}
+        files: |
+            one-api-freebsd-amd64.tar.gz
+              
+    - name: Delete workflow runs
+      uses: Mattraks/delete-workflow-runs@v2
+      with:
+        token: ${{ github.token }}
+        repository: ${{ github.repository }}
+        retain_days: 1
+        keep_minimum_runs: 8
