@@ -35,7 +35,7 @@ jobs:
     - name: Build binary
       run: |
         cd one-api
-        GOOS=freebsd GOARCH=amd64 go build -ldflags "-s -w -X 'one-api/common.Version=$(git describe --tags)' -extldflags '-static'" -o one-api  && tar -czvf ../one-api-freebsd-amd64.tar.gz ./one-api && rm -f one-api \
+        GOOS=freebsd GOARCH=amd64 go build -ldflags "-s -w -X 'one-api/common.Version=$(git describe --tags)' -extldflags '-static'" -o one-api  && tar -czvf ../one-api-freebsd-amd64.tar.gz ./one-api
         cd ..
         
     - name: Upload artifact
