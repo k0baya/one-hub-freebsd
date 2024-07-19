@@ -16,14 +16,14 @@ jobs:
           
     - name: Clone Repo
       run: |
-          export LATEST_APP=$(wget -qO- https://api.github.com/repos/MartialBE/one-api/tags | gawk -F '["v]' '/name/{print "v"$5;exit}')
-          git clone -b $LATEST_APP https://github.com/MartialBE/one-api
+          export LATEST_APP=$(wget -qO- https://api.github.com/repos/MartialBE/one-hub/tags | gawk -F '["v]' '/name/{print "v"$5;exit}')
+          git clone -b $LATEST_APP https://github.com/MartialBE/one-hub
 
     - name: Build Frontend
       env:
         CI: ""
       run: |
-          cd one-api/web
+          cd one-hub/web
           yarn install
           REACT_APP_VERSION=$(git describe --tags) yarn run build
           cd ../..
@@ -40,8 +40,8 @@ jobs:
           ln -s /usr/local/go/bin/go /usr/local/bin/go
           
         run: |
-          git config --global --add safe.directory /home/runner/work/one-api-berry-freebsd/one-api-berry-freebsd/one-api
-          cd one-api
+          git config --global --add safe.directory /home/runner/work/one-api-berry-freebsd/one-api-berry-freebsd/one-hub
+          cd one-hub
           go build -ldflags "-s -w -X 'one-api/common.Version=$(git describe --tags)' -extldflags '-static'" -o one-api  && tar -czvf ../one-api-freebsd-amd64.tar.gz ./one-api
         
     - name: Upload artifact
