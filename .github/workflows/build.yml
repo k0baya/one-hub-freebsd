@@ -40,20 +40,20 @@ jobs:
           ln -s /usr/local/go/bin/go /usr/local/bin/go
           
         run: |
-          git config --global --add safe.directory /home/runner/work/one-api-berry-freebsd/one-api-berry-freebsd/one-hub
+          git config --global --add safe.directory /home/runner/work/one-hub-freebsd/one-hub-freebsd/one-hub
           cd one-hub
-          go build -ldflags "-s -w -X 'one-api/common.Version=$(git describe --tags)' -extldflags '-static'" -o one-api  && tar -czvf ../one-api-freebsd-amd64.tar.gz ./one-api
+          go build -ldflags "-s -w -X 'one-api/common.Version=$(git describe --tags)' -extldflags '-static'" -o one-api  && tar -czvf ../one-hub-amd64.tar.gz ./one-api
         
     - name: Upload artifact
       uses: actions/upload-artifact@main
       with:
-        name: memos-pre-built
+        name: one-hub-pre-built
         path: |
-            one-api-freebsd-amd64.tar.gz
+            one-hub-amd64.tar.gz
             
     - name: Generate release tag
       id: tag
-      run: echo "release_tag=$(wget -qO- https://api.github.com/repos/MartialBE/one-api/tags | gawk -F '["v]' '/name/{print "v"$5;exit}')" >> $GITHUB_OUTPUT
+      run: echo "release_tag=$(wget -qO- https://api.github.com/repos/MartialBE/one-hub/tags | gawk -F '["v]' '/name/{print "v"$5;exit}')" >> $GITHUB_OUTPUT
 
     - name: Create release
       uses: softprops/action-gh-release@v1
@@ -62,7 +62,7 @@ jobs:
       with:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         files: |
-            one-api-freebsd-amd64.tar.gz
+            one-hub-amd64.tar.gz
               
     - name: Delete workflow runs
       uses: Mattraks/delete-workflow-runs@v2
